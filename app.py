@@ -26,6 +26,7 @@ if archivo:
 
     st.markdown("---")
 
+    ventas_dia = df[df["Tipo"] == "Venta"].groupby("Fecha")["Total"].sum().reset_index()
     fig1, ax1 = plt.subplots()
     ax1.bar(ventas_dia["Fecha"].astype(str), ventas_dia["Total"], color="#2E75B6")
     ax1.set_title("Ventas por día")
