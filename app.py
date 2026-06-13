@@ -27,17 +27,19 @@ if archivo:
     st.markdown("---")
 
     ventas_dia = df[df["Tipo"] == "Venta"].groupby("Fecha")["Total"].sum().reset_index()
-    fig1, ax1 = plt.subplots(figsize=(7, 3))
+    fig1, ax1 = plt.subplots(figsize=(5, 2))
     ax1.bar(ventas_dia["Fecha"].astype(str), ventas_dia["Total"], color="#2E75B6")
     ax1.set_title("Ventas por día")
     plt.xticks(rotation=45)
-   st.pyplot(fig1, use_container_width=False)
+    plt.tight_layout()
+    st.pyplot(fig1, use_container_width=False)
 
     top_productos = df[df["Tipo"] == "Venta"].groupby("Producto")["Total"].sum().sort_values(ascending=False).reset_index()
-    fig2, ax2 = plt.subplots(figsize=(7, 3))
+    fig2, ax2 = plt.subplots(figsize=(5, 2))
     ax2.bar(top_productos["Producto"], top_productos["Total"], color="#70AD47")
     ax2.set_title("Top productos más vendidos")
     plt.xticks(rotation=45)
+    plt.tight_layout()
     st.pyplot(fig2, use_container_width=False)
 
     st.markdown("---")
