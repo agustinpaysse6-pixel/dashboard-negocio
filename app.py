@@ -1,14 +1,14 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from openai import OpenAI
+import os
 
 st.set_page_config(page_title="Dashboard Negocio", page_icon="📊", layout="wide")
 
 st.title("📊 Dashboard de tu Negocio")
 st.markdown("---")
 
-api_key = st.sidebar.text_input("🔑 OpenAI API Key", type="password")
 archivo = st.file_uploader("Subí tu Excel de ventas", type=["xlsx"])
 
 if archivo:
@@ -26,44 +26,58 @@ if archivo:
 
     st.markdown("---")
 
+    # Ventas por día
     ventas_dia = df[df["Tipo"] == "Venta"].groupby("Fecha")["Total"].sum().reset_index()
-    fig1, ax1 = plt.subplots(figsize=(5, 2))
-    ax1.bar(ventas_dia["Fecha"].astype(str), ventas_dia["Total"], color="#2E75B6")
-    ax1.set_title("Ventas por día")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    st.pyplot(fig1, use_container_width=False)
+    fig1 = go.Figure(go.Bar(x=ventas_dia["Fecha"].astype(str), y=ventas_dia["Total"], marker_color="#2E75B6"))
+    fig1.update_layout(title="Ventas por día", xaxis_title="Fecha", yaxis_title="Total")
+    st.plotly_chart(fig1, use_container_width=True)
 
-    top_productos = df[df["Tipo"] == "Venta"].groupby("Producto")["Total"].sum().sort_values(ascending=False).reset_index()
-    fig2, ax2 = plt.subplots(figsize=(5, 2))
-    ax2.bar(top_productos["Producto"], top_productos["Total"], color="#70AD47")
-    ax2.set_title("Top productos más vendidos")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    st.pyplot(fig2, use_container_width=False)
+    # Productos
+    productos = df[df["Tipo"] == "Venta"].groupby("Producto").agg(
+        Total=("Total", "sum"),
+        Cantidad=("Cantidad", "sum")
+    ).reset_index().sort_values("Total", ascending=False)
+
+    productos["Rentabilidad"] = productos["Total"] / productos["Cantidad"]
+
+    col4, col5 = st.columns(2)
+
+    with col4:
+        fig2 = go.Figure(go.Bar(
+            x=productos["Producto"], y=productos["Total"],
+            marker_color="#70AD47"
+        ))
+        fig2.update_layout(title="Ventas por producto", xaxis_title="Producto", yaxis_title="Total")
+        st.plotly_chart(fig2, use_container_width=True)
+
+    with col5:
+        fig3 = go.Figure(go.Bar(
+            x=productos["Producto"], y=productos["Rentabilidad"],
+            marker_color="#ED7D31"
+        ))
+        fig3.update_layout(title="Rentabilidad por producto ($ por unidad)", xaxis_title="Producto", yaxis_title="$ por unidad")
+        st.plotly_chart(fig3, use_container_width=True)
+
+    st.markdown("---")
+    st.subheader("🏆 Ranking de productos")
+    col6, col7 = st.columns(2)
+    with col6:
+        st.markdown("**Más vendidos**")
+        st.dataframe(productos[["Producto", "Total", "Cantidad"]].head(3).reset_index(drop=True))
+    with col7:
+        st.markdown("**Menos vendidos**")
+        st.dataframe(productos[["Producto", "Total", "Cantidad"]].tail(3).reset_index(drop=True))
 
     st.markdown("---")
     st.subheader("🤖 Preguntale a la IA sobre tu negocio")
-
     pregunta = st.text_input("¿Qué querés saber?", placeholder="Ej: ¿Cuál fue el producto más vendido?")
 
-    if pregunta and api_key:
+    if pregunta:
+        api_key = st.secrets["OPENAI_API_KEY"]
         client = OpenAI(api_key=api_key)
         resumen = df.to_string(index=False)
         respuesta = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "Sos un asistente que analiza datos de un negocio. Respondé en español, de forma clara y concisa."},
-                {"role": "user", "content": f"Estos son los datos del negocio:\n{resumen}\n\nPregunta: {pregunta}"}
-            ]
-        )
-        st.success(respuesta.choices[0].message.content)
-    elif pregunta and not api_key:
-        st.warning("Ingresá tu API Key en el panel izquierdo.")
-
-    st.markdown("---")
-    st.subheader("🗂 Datos completos")
-    st.dataframe(df)
-
-else:
-    st.info("Subí un archivo Excel para ver el análisis.")
+                {"role": "user", "content": f"Estos son
