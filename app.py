@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import matplotlib.pyplot as plt
 from openai import OpenAI
 
 st.set_page_config(page_title="Dashboard Negocio", page_icon="📊", layout="wide")
@@ -26,13 +26,18 @@ if archivo:
 
     st.markdown("---")
 
-    ventas_dia = df[df["Tipo"] == "Venta"].groupby("Fecha")["Total"].sum().reset_index()
-    fig1 = px.bar(ventas_dia, x="Fecha", y="Total", title="Ventas por día", color_discrete_sequence=["#2E75B6"])
-    st.plotly_chart(fig1, use_container_width=True)
+    fig1, ax1 = plt.subplots()
+    ax1.bar(ventas_dia["Fecha"].astype(str), ventas_dia["Total"], color="#2E75B6")
+    ax1.set_title("Ventas por día")
+    plt.xticks(rotation=45)
+    st.pyplot(fig1)
 
     top_productos = df[df["Tipo"] == "Venta"].groupby("Producto")["Total"].sum().sort_values(ascending=False).reset_index()
-    fig2 = px.bar(top_productos, x="Producto", y="Total", title="Top productos más vendidos", color_discrete_sequence=["#70AD47"])
-    st.plotly_chart(fig2, use_container_width=True)
+    fig2, ax2 = plt.subplots()
+    ax2.bar(top_productos["Producto"], top_productos["Total"], color="#70AD47")
+    ax2.set_title("Top productos más vendidos")
+    plt.xticks(rotation=45)
+    st.pyplot(fig2)
 
     st.markdown("---")
     st.subheader("🤖 Preguntale a la IA sobre tu negocio")
