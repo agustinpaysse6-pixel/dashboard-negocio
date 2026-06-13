@@ -80,4 +80,14 @@ if archivo:
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "Sos un asistente que analiza datos de un negocio. Respondé en español, de forma clara y concisa."},
-                {"role": "user", "content": f"Estos son
+                {"role": "user", "content": f"Estos son los datos del negocio:\n{resumen}\n\nPregunta: {pregunta}"}
+            ]
+        )
+        st.success(respuesta.choices[0].message.content)
+
+    st.markdown("---")
+    st.subheader("🗂 Datos completos")
+    st.dataframe(df)
+
+else:
+    st.info("Subí un archivo Excel para ver el análisis.")
